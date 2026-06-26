@@ -80,13 +80,12 @@ function obtenerListaProductosSelect() {
 
 // 5. Insertar una Nueva Transacción de Inventario (DML)
 // Registra la cabecera del movimiento y su detalle, actualizando además el stock_actual
-function insertarMovimiento(tipo, idProducto, cantidad, usuarioReg) {
+async function insertarMovimiento(tipo, idProducto, cantidad, usuarioReg) {
   try {
     // Iniciar una transacción manual para asegurar las propiedades ACID en la operación mixta
     db.run("BEGIN TRANSACTION;");
 
     // A. Insertar en la cabecera (movimientos)
-    // Usamos sentencias preparadas para evitar inyección SQL y simular buenas prácticas de desarrollo
     const stmtCabecera = db.prepare("INSERT INTO movimientos (tipo, usuario_reg) VALUES (?, ?);");
     stmtCabecera.run([tipo, usuarioReg]);
     stmtCabecera.free();
@@ -103,7 +102,7 @@ function insertarMovimiento(tipo, idProducto, cantidad, usuarioReg) {
     if (tipo === 'ENTRADA') {
       db.run(`UPDATE productos SET stock_actual = stock_actual + ${cantidad} WHERE id_producto = ${idProducto};`);
     } else if (tipo === 'SALIDA') {
-      // Validación previa para asegurar que la regla de negocio CHECK (stock_actual >= 0) no truene la app
+      // Validación previa para asegurar que la regla de negocio CHECK (stock_actual >= 0) no rompa la app
       const stockActual = db.exec(`SELECT stock_actual FROM productos WHERE id_producto = ${idProducto};`)[0].values[0][0];
       if (stockActual < cantidad) {
         db.run("ROLLBACK;");
@@ -113,14 +112,25 @@ function insertarMovimiento(tipo, idProducto, cantidad, usuarioReg) {
       db.run(`UPDATE productos SET stock_actual = stock_actual - ${cantidad} WHERE id_producto = ${idProducto};`);
     }
 
-    // Confirmar los cambios si todo es consistente
+    // Confirmar los cambios lógicos en la memoria SQLite si todo es consistente
     db.run("COMMIT;");
-    console.log(`Transacción DML exitosa: Se registró un flujo de tipo ${tipo} para el producto ID ${idProducto}.`);
+    console.log(`Transacción DML exitosa en memoria: Se registró un flujo de tipo ${tipo}.`);
+
+    // 🔥 PERSISTENCIA ASÍNCRONA: Guardar el nuevo estado de SQLite binario en IndexedDB de forma segura
+    if (typeof guardarEnIndexedDB === 'function') {
+      await guardarEnIndexedDB();
+      console.log("🔒 Cambios guardados permanentemente en el almacenamiento IndexedDB.");
+    }
+
     return true;
 
   } catch (error) {
-    // Si alguna restricción de llave o CHECK falla, revertimos para mantener la integridad referencial
-    db.run("ROLLBACK;");
+    // Si alguna restricción de llave o CHECK falla, revertimos para mantener la consistencia
+    try {
+      db.run("ROLLBACK;");
+    } catch (rollbackErr) {
+      console.warn("No había transacción activa para revertir:", rollbackErr);
+    }
     console.error("Transacción abortada. Se ejecutó ROLLBACK debido a un fallo de integridad:", error);
     alert("❌ Error de integridad en la base de datos: Compruebe las restricciones.");
     return false;

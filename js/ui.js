@@ -134,23 +134,23 @@ function poblarSelectProductos() {
 }
 
 // 5. Interceptar el envío del formulario DML
-function registrarTransaccion(event) {
-  event.preventDefault(); // Evitar recarga de página obligatoria por envío de formulario
+// Asegúrate de agregar 'async' al inicio de la función
+async function registrarTransaccion(event) {
+  event.preventDefault(); 
 
   const tipo = document.getElementById('form-tipo').value;
   const idProducto = parseInt(document.getElementById('form-producto').value);
   const cantidad = parseInt(document.getElementById('form-cantidad').value);
   const usuario = document.getElementById('form-usuario').value;
 
-  // Ejecutar la inserción transaccional ACID
-  const exito = insertarMovimiento(tipo, idProducto, cantidad, usuario);
+  // 🔥 Agrega 'await' aquí para que la app no cambie de página antes de guardar en IndexedDB
+  const exito = await insertarMovimiento(tipo, idProducto, cantidad, usuario);
 
   if (exito) {
     alert(`🎉 ¡Movimiento de ${tipo} registrado con éxito en la base de datos!`);
     document.getElementById('form-movimiento').reset();
-    document.getElementById('form-usuario').value = "Luis_Fernando"; // Re-establecer valor bloqueado
+    document.getElementById('form-usuario').value = "Luis_Fernando"; 
     
-    // Redirigir de vuelta al dashboard para ver el impacto inmediato del análisis de datos
-    switchView('dashboard');
+    switchView('dashboard'); // Redirige y actualiza las métricas visuales
   }
 }
