@@ -1,28 +1,34 @@
 // Variable global para almacenar la instancia de la base de datos
 let db;
 
-// Inicializar el motor SQLite (WebAssembly)
+// Inicializar el motor SQLite (WebAssembly) con persistencia en LocalStorage
 async function initDatabase() {
   try {
-    // Configurar el cargador de SQL.js indicando dónde buscar el archivo .wasm
     const SQL = await initSqlJs({
       locateFile: file => `https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.8.0/${file}`
     });
 
-    // Crear una nueva base de datos vacía en memoria
-    db = new SQL.Database();
-    console.log("¡Motor SQLite (WebAssembly) iniciado correctamente en memoria!");
+    // Intentar recuperar una sesión previa guardada en el navegador
+    const estadoGuardado = localStorage.getItem("inventario_db_backup");
 
-    // 1. Activar soporte de llaves foráneas (Requisito de tu reporte)
-    db.run("PRAGMA foreign_keys = ON;");
+    if (estadoGuardado) {
+      // Convertir la cadena de texto guardada de vuelta a un arreglo de bytes (Uint8Array)
+      const u8array = new Uint8Array(JSON.parse(estadoGuardado));
+      db = new SQL.Database(u8array);
+      console.log("¡Base de datos restaurada con éxito desde el LocalStorage!");
+    } else {
+      // Si es la primera vez que abre la app, crear BD vacía en memoria
+      db = new SQL.Database();
+      console.log("¡Nueva base de datos iniciada en memoria!");
+      
+      db.run("PRAGMA foreign_keys = ON;");
+      crearTablas();
+      insertarDatosIniciales();
+      
+      // Guardar el estado inicial
+      guardarEnLocalStorage();
+    }
 
-    // 2. Ejecutar Scripts DDL (Estructura idéntica a tu reporte)
-    crearTablas();
-
-    // 3. Ejecutar Scripts DML (Carga masiva simulada para la rúbrica)
-    insertarDatosIniciales();
-
-    // 4. Inicializar los componentes de la interfaz de usuario una vez lista la BD
     if (typeof initUI === 'function') {
       initUI();
     }
@@ -32,7 +38,17 @@ async function initDatabase() {
   }
 }
 
-// Estructura DDL extraída de tu documento de Atributo de Egreso
+// Nueva función para persistir el estado binario de SQLite en el navegador
+function guardarEnLocalStorage() {
+  if (db) {
+    const binaryArray = db.export(); // Exporta la BD como Uint8Array
+    const arrayPlano = Array.from(binaryArray); // Convierte a un arreglo común para poder serializarlo
+    localStorage.setItem("inventario_db_backup", JSON.stringify(arrayPlano));
+    console.log("Estado de la base de datos sincronizado en LocalStorage.");
+  }
+}
+
+// Estructura DDL y DML para la base de datos SQLite en memoria (3FN)
 function crearTablas() {
   // Tabla: categorias
   db.run(`
