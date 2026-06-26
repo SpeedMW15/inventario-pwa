@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sistema de Control de Inventarios | AED</title>
+  <link rel="manifest" href="./manifest.json">
+  <meta name="theme-color" content="#2563eb">
+  
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.8.0/sql-wasm.js"></script>
+</head>
+<body class="bg-slate-900 text-slate-100 min-h-screen font-sans">
+
+  <div class="flex flex-col md:flex-row min-h-screen">
+    
+    <aside class="w-full md:w-64 bg-slate-950 p-6 flex flex-col justify-between border-r border-slate-800">
+      <div>
+        <div class="mb-8">
+          <h1 class="text-xl font-bold text-blue-500 tracking-wider">INVENTARIO AED</h1>
+          <p class="text-xs text-slate-400">TESH - Ing. Sistemas</p>
+        </div>
+        
+        <nav class="space-y-2">
+          <button onclick="switchView('dashboard')" class="w-full text-left py-2.5 px-4 rounded transition bg-blue-600 text-white font-medium flex items-center gap-2" id="btn-dashboard">
+            Dashboard
+          </button>
+          <button onclick="switchView('productos')" class="w-full text-left py-2.5 px-4 rounded transition hover:bg-slate-800 text-slate-300 flex items-center gap-2" id="btn-productos">
+            Catálogo / Productos
+          </button>
+          <button onclick="switchView('movimientos')" class="w-full text-left py-2.5 px-4 rounded transition hover:bg-slate-800 text-slate-300 flex items-center gap-2" id="btn-movimientos">
+            Registrar Flujo
+          </button>
+        </nav>
+      </div>
+
+      <div class="pt-6 border-t border-slate-800 space-y-2">
+        <button onclick="exportarBaseDatos()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white py-2 px-3 rounded text-sm font-medium transition flex items-center justify-center gap-2">
+          Descargar Respaldo (.db)
+        </button>
+        <p class="text-[10px] text-slate-500 text-center">Fase 4: Plan de Respaldos</p>
+      </div>
+    </aside>
+
+    <main class="flex-1 p-6 md:p-10 space-y-8">
+      
+      <header class="flex justify-between items-center border-b border-slate-800 pb-4">
+        <div>
+          <h2 id="view-title" class="text-2xl font-bold">Resumen General</h2>
+          <p class="text-sm text-slate-400">Análisis Exploratorio de Datos en Tiempo Real</p>
+        </div>
+        <div class="text-right text-xs text-slate-400">
+          <p class="font-semibold text-slate-300">Luis Fernando Peña Castillo</p>
+          <p>Matrícula: 24090844</p>
+        </div>
+      </header>
+
+      <section id="view-dashboard" class="space-y-6">
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div class="bg-slate-950 p-5 rounded-xl border border-slate-800">
+            <h3 class="text-slate-400 text-sm font-medium">Total de Productos</h3>
+            <p id="metric-total-productos" class="text-3xl font-bold mt-2 text-blue-400">0</p>
+          </div>
+          <div class="bg-slate-950 p-5 rounded-xl border border-slate-800">
+            <h3 class="text-slate-400 text-sm font-medium">Alertas de Stock Crítico</h3>
+            <p id="metric-stock-critico" class="text-3xl font-bold mt-2 text-rose-500">0</p>
+          </div>
+          <div class="bg-slate-950 p-5 rounded-xl border border-slate-800">
+            <h3 class="text-slate-400 text-sm font-medium">Movimientos Registrados</h3>
+            <p id="metric-total-movimientos" class="text-3xl font-bold mt-2 text-emerald-400">0</p>
+          </div>
+        </div>
+
+        <div class="bg-slate-950 p-6 rounded-xl border border-slate-800">
+          <h3 class="text-lg font-bold text-rose-400 mb-4 flex items-center gap-2">
+            ⚠️ Alertas de Stock Crítico (Existencias &lt;= Mínimo)
+          </h3>
+          <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse">
+              <thead>
+                <tr class="border-b border-slate-800 text-slate-400 text-sm">
+                  <th class="pb-3">Producto</th>
+                  <th class="pb-3">Stock Actual</th>
+                  <th class="pb-3">Umbral Mínimo</th>
+                  <th class="pb-3">Estado</th>
+                </tr>
+              </thead>
+              <tbody id="table-stock-critico" class="text-sm divide-y divide-slate-800/50">
+                </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <section id="view-productos" class="hidden space-y-6">
+        <div class="bg-slate-950 p-6 rounded-xl border border-slate-800">
+          <h3 class="text-lg font-bold mb-4">Auditoría General de Almacén (Consolidado con JOINs)</h3>
+          <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse">
+              <thead>
+                <tr class="border-b border-slate-800 text-slate-400 text-sm">
+                  <th class="pb-3">Código</th>
+                  <th class="pb-3">Producto</th>
+                  <th class="pb-3">Categoría</th>
+                  <th class="pb-3">Stock</th>
+                  <th class="pb-3">Costo</th>
+                  <th class="pb-3">Proveedor</th>
+                </tr>
+              </thead>
+              <tbody id="table-productos-general" class="text-sm divide-y divide-slate-800/50">
+                </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <section id="view-movimientos" class="hidden max-w-xl bg-slate-950 p-6 rounded-xl border border-slate-800">
+        <h3 class="text-lg font-bold mb-4">Formulario de Transacciones (DML)</h3>
+        <form id="form-movimiento" onsubmit="registrarTransaccion(event)" class="space-y-4">
+          <div>
+            <label class="block text-sm text-slate-400 mb-1">Tipo de Flujo</label>
+            <select id="form-tipo" class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-white focus:outline-none focus:border-blue-500" required>
+              <option value="ENTRADA">ENTRADA (Reabastecimiento)</option>
+              <option value="SALIDA">SALIDA (Venta / Distribución)</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-sm text-slate-400 mb-1">Producto Afectado</label>
+            <select id="form-producto" class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-white focus:outline-none focus:border-blue-500" required>
+              </select>
+          </div>
+          <div>
+            <label class="block text-sm text-slate-400 mb-1">Cantidad de Piezas</label>
+            <input type="number" id="form-cantidad" min="1" class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-white focus:outline-none focus:border-blue-500" required>
+          </div>
+          <div>
+            <label class="block text-sm text-slate-400 mb-1">Usuario Operador (Ética/Seguridad)</label>
+            <input type="text" id="form-usuario" value="Luis_Fernando" class="w-full bg-slate-800 border border-slate-700 rounded p-2 text-slate-400 focus:outline-none cursor-not-allowed" readonly>
+          </div>
+          <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded transition">
+            Ejecutar e Insertar Registro
+          </button>
+        </form>
+      </section>
+
+    </main>
+  </div>
+
+  <script href="./js/app.js"></script>
+  <script src="./js/db.js"></script>
+  <script src="./js/queries.js"></script>
+  <script src="./js/ui.js"></script>
+</body>
+</html>
