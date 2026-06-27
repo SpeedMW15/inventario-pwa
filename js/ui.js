@@ -4,13 +4,21 @@
  */
 
 // Función de arranque de la interfaz, llamada automáticamente al iniciar db.js
+// Función de arranque de la interfaz, llamada automáticamente al iniciar db.js
+// Función de arranque de la interfaz, llamada automáticamente al iniciar db.js
 function initUI() {
-  actualizarDashboard();
-  poblarSelectProductos();
-  
-  // Inicializar los iconos de Lucide (si se cargaron en el HTML)
-  if (typeof lucide !== 'undefined') {
-    lucide.createIcons();
+  try {
+    actualizarDashboard();
+    poblarSelectProductos();
+    
+    // Seguro para inicializar los iconos de Lucide sin bloquear los botones
+    setTimeout(() => {
+      if (typeof lucide !== 'undefined') {
+        lucide.createIcons();
+      }
+    }, 100);
+  } catch (error) {
+    console.error("Error al inicializar los elementos visuales de la UI:", error);
   }
 }
 

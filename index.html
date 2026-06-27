@@ -3,91 +3,147 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Sistema de Control de Inventarios | AED</title>
+  <title>Dashboard Industrial | Control de Inventarios AED</title>
   <link rel="manifest" href="./manifest.json">
-  <meta name="theme-color" content="#2563eb">
+  <meta name="theme-color" content="#1e293b">
   
   <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            panel: '#0b1329',
+            fondo: '#010816',
+            accent: '#38bdf8'
+          }
+        }
+      }
+    }
+  </script>
+  
   <script src="https://unpkg.com/lucide@latest"></script>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.8.0/sql-wasm.js"></script>
 </head>
-<body class="bg-slate-900 text-slate-100 min-h-screen font-sans">
+<body class="bg-fondo text-slate-200 min-h-screen font-sans antialiased selection:bg-sky-500/30 selection:text-sky-300">
 
-  <div class="flex flex-col md:flex-row min-h-screen">
+  <div class="flex flex-col lg:flex-row min-h-screen">
     
-    <aside class="w-full md:w-64 bg-slate-950 p-6 flex flex-col justify-between border-r border-slate-800">
+    <aside class="w-full lg:w-72 bg-panel p-6 flex flex-col justify-between border-b lg:border-b-0 lg:border-r border-slate-800/60 shadow-xl backdrop-blur-sm z-10">
       <div>
-        <div class="mb-8">
-          <h1 class="text-xl font-bold text-blue-500 tracking-wider">INVENTARIO AED</h1>
-          <p class="text-xs text-slate-400">TESH - Ing. Sistemas</p>
+        <div class="mb-10 flex items-center gap-3 p-2 bg-slate-900/40 rounded-xl border border-slate-800/50">
+          <div class="p-2.5 bg-gradient-to-br from-blue-500 to-sky-600 rounded-lg text-white shadow-lg shadow-blue-500/20">
+            <i data-lucide="database" class="w-6 h-6"></i>
+          </div>
+          <div>
+            <h1 class="text-base font-bold text-white tracking-wide uppercase">Inventario AED</h1>
+            <p class="text-[11px] font-medium text-slate-400 tracking-wider">TESH • Ing. Sistemas</p>
+          </div>
         </div>
         
-        <nav class="space-y-2">
-          <button onclick="switchView('dashboard')" class="w-full text-left py-2.5 px-4 rounded transition bg-blue-600 text-white font-medium flex items-center gap-2" id="btn-dashboard">
-            Dashboard
+        <p class="text-[10px] font-bold text-slate-500 uppercase tracking-widest px-3 mb-3">Módulos del Sistema</p>
+        <nav class="space-y-1.5">
+          <button onclick="switchView('dashboard')" class="w-full text-left py-3 px-4 rounded-xl transition duration-200 bg-gradient-to-r from-blue-600 to-blue-500 text-white font-medium flex items-center gap-3 shadow-lg shadow-blue-600/10" id="btn-dashboard">
+            <i data-lucide="layout-dashboard" class="w-4 h-4"></i> Dashboard General
           </button>
-          <button onclick="switchView('productos')" class="w-full text-left py-2.5 px-4 rounded transition hover:bg-slate-800 text-slate-300 flex items-center gap-2" id="btn-productos">
-            Catálogo / Productos
+          <button onclick="switchView('productos')" class="w-full text-left py-3 px-4 rounded-xl transition duration-200 hover:bg-slate-800/50 text-slate-400 hover:text-slate-200 flex items-center gap-3" id="btn-productos">
+            <i data-lucide="package" class="w-4 h-4"></i> Catálogo Maestro
           </button>
-          <button onclick="switchView('movimientos')" class="w-full text-left py-2.5 px-4 rounded transition hover:bg-slate-800 text-slate-300 flex items-center gap-2" id="btn-movimientos">
-            Registrar Flujo
+          <button onclick="switchView('movimientos')" class="w-full text-left py-3 px-4 rounded-xl transition duration-200 hover:bg-slate-800/50 text-slate-400 hover:text-slate-200 flex items-center gap-3" id="btn-movimientos">
+            <i data-lucide="arrow-left-right" class="w-4 h-4"></i> Registrar Flujo (DML)
           </button>
         </nav>
       </div>
 
-      <div class="pt-6 border-t border-slate-800 space-y-2">
-        <button onclick="exportarBaseDatos()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white py-2 px-3 rounded text-sm font-medium transition flex items-center justify-center gap-2">
-          Descargar Respaldo (.db)
-        </button>
-        <p class="text-[10px] text-slate-500 text-center">Fase 4: Plan de Respaldos</p>
+      <div class="pt-6 border-t border-slate-800/80 space-y-3 mt-6 lg:mt-0">
+        <div class="bg-slate-900/40 p-3 rounded-xl border border-slate-800/40 text-center">
+          <p class="text-[11px] text-slate-400 font-medium flex items-center justify-center gap-1.5 mb-2">
+            <span class="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></span> Motor SQLite Conectado
+          </p>
+          <button onclick="exportarBaseDatos()" class="w-full bg-slate-800 hover:bg-slate-700 hover:text-white text-slate-300 py-2.5 px-3 rounded-lg text-xs font-semibold transition duration-200 flex items-center justify-center gap-2 border border-slate-700/50 shadow-sm">
+            <i data-lucide="download-cloud" class="w-3.5 h-3.5"></i> Respaldar Archivo (.db)
+          </button>
+        </div>
+        <p class="text-[9px] text-slate-500 font-medium tracking-wider text-center uppercase">Fase 4 • Plan de Contingencia</p>
       </div>
     </aside>
 
-    <main class="flex-1 p-6 md:p-10 space-y-8">
+    <main class="flex-1 p-6 md:p-10 space-y-8 overflow-y-auto">
       
-      <header class="flex justify-between items-center border-b border-slate-800 pb-4">
+      <header class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-panel/30 p-6 rounded-2xl border border-slate-800/40 backdrop-blur-md shadow-sm">
         <div>
-          <h2 id="view-title" class="text-2xl font-bold">Resumen General</h2>
-          <p class="text-sm text-slate-400">Análisis Exploratorio de Datos en Tiempo Real</p>
+          <h2 id="view-title" class="text-2xl font-bold bg-gradient-to-r from-white via-slate-200 to-slate-400 bg-clip-text text-transparent">Resumen General</h2>
+          <p class="text-xs text-slate-400 mt-0.5">Análisis Exploratorio de Datos Transaccionales en Tiempo Real</p>
         </div>
-        <div class="text-right text-xs text-slate-400">
-          <p class="font-semibold text-slate-300">Luis Fernando Peña Castillo</p>
-          <p>Matrícula: 24090844</p>
+        <div class="flex items-center gap-3 bg-slate-900/60 py-2.5 px-4 rounded-xl border border-slate-800/80 shadow-inner">
+          <div class="w-8 h-8 bg-blue-500/10 text-blue-400 rounded-full flex items-center justify-center font-bold text-xs border border-blue-500/20">
+            LF
+          </div>
+          <div class="text-right text-[11px]">
+            <p class="font-bold text-white">Luis Fernando Peña Castillo</p>
+            <p class="text-slate-400 font-mono">Matrícula: 24090844</p>
+          </div>
         </div>
       </header>
 
-      <section id="view-dashboard" class="space-y-6">
-        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <div class="bg-slate-950 p-5 rounded-xl border border-slate-800">
-            <h3 class="text-slate-400 text-sm font-medium">Total de Productos</h3>
-            <p id="metric-total-productos" class="text-3xl font-bold mt-2 text-blue-400">0</p>
+      <section id="view-dashboard" class="space-y-8">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div class="bg-panel p-6 rounded-2xl border border-slate-800/60 shadow-md relative overflow-hidden group hover:border-blue-500/30 transition duration-300">
+            <div class="absolute top-0 right-0 w-24 h-24 bg-blue-500/5 rounded-full blur-xl group-hover:bg-blue-500/10 transition duration-300"></div>
+            <div class="flex justify-between items-start">
+              <div>
+                <h3 class="text-slate-400 text-xs font-semibold uppercase tracking-wider">Universo de Productos</h3>
+                <p id="metric-total-productos" class="text-4xl font-extrabold mt-3 text-white tracking-tight">0</p>
+              </div>
+              <div class="p-2 bg-blue-500/10 text-blue-400 rounded-lg border border-blue-500/20"><i data-lucide="box"></i></div>
+            </div>
+            <p class="text-[11px] text-slate-500 mt-4 flex items-center gap-1"><i data-lucide="check-circle" class="w-3 h-3"></i> Sincronizado en memoria indexada</p>
           </div>
-          <div class="bg-slate-950 p-5 rounded-xl border border-slate-800">
-            <h3 class="text-slate-400 text-sm font-medium">Alertas de Stock Crítico</h3>
-            <p id="metric-stock-critico" class="text-3xl font-bold mt-2 text-rose-500">0</p>
+          
+          <div class="bg-panel p-6 rounded-2xl border border-slate-800/60 shadow-md relative overflow-hidden group hover:border-rose-500/30 transition duration-300">
+            <div class="absolute top-0 right-0 w-24 h-24 bg-rose-500/5 rounded-full blur-xl group-hover:bg-rose-500/10 transition duration-300"></div>
+            <div class="flex justify-between items-start">
+              <div>
+                <h3 class="text-slate-400 text-xs font-semibold uppercase tracking-wider">Riesgo de Desabasto</h3>
+                <p id="metric-stock-critico" class="text-4xl font-extrabold mt-3 text-rose-400 tracking-tight">0</p>
+              </div>
+              <div class="p-2 bg-rose-500/10 text-rose-400 rounded-lg border border-rose-500/20"><i data-lucide="alert-triangle"></i></div>
+            </div>
+            <p class="text-[11px] text-rose-400/80 mt-4 flex items-center gap-1"><i data-lucide="info" class="w-3 h-3"></i> Requiere orden de reabastecimiento</p>
           </div>
-          <div class="bg-slate-950 p-5 rounded-xl border border-slate-800">
-            <h3 class="text-slate-400 text-sm font-medium">Movimientos Registrados</h3>
-            <p id="metric-total-movimientos" class="text-3xl font-bold mt-2 text-emerald-400">0</p>
+
+          <div class="bg-panel p-6 rounded-2xl border border-slate-800/60 shadow-md relative overflow-hidden group hover:border-emerald-500/30 transition duration-300">
+            <div class="absolute top-0 right-0 w-24 h-24 bg-emerald-500/5 rounded-full blur-xl group-hover:bg-emerald-500/10 transition duration-300"></div>
+            <div class="flex justify-between items-start">
+              <div>
+                <h3 class="text-slate-400 text-xs font-semibold uppercase tracking-wider">Auditorías Operativas</h3>
+                <p id="metric-total-movimientos" class="text-4xl font-extrabold mt-3 text-emerald-400 tracking-tight">0</p>
+              </div>
+              <div class="p-2 bg-emerald-500/10 text-emerald-400 rounded-lg border border-emerald-500/20"><i data-lucide="activity"></i></div>
+            </div>
+            <p class="text-[11px] text-slate-500 mt-4 flex items-center gap-1"><i data-lucide="shield" class="w-3 h-3"></i> Logs transaccionales protegidos</p>
           </div>
         </div>
 
-        <div class="bg-slate-950 p-6 rounded-xl border border-slate-800">
-          <h3 class="text-lg font-bold text-rose-400 mb-4 flex items-center gap-2">
-            ⚠️ Alertas de Stock Crítico (Existencias &lt;= Mínimo)
-          </h3>
+        <div class="bg-panel rounded-2xl border border-slate-800/60 shadow-lg overflow-hidden">
+          <div class="p-5 border-b border-slate-800/60 bg-slate-900/30 flex items-center justify-between">
+            <h3 class="text-sm font-bold text-rose-400 flex items-center gap-2">
+              <i data-lucide="bell" class="w-4 h-4"></i> Alertas de Control de Inventario (Existencias &lt;= Mínimo)
+            </h3>
+            <span class="text-[11px] bg-rose-500/10 text-rose-400 px-2.5 py-1 rounded-full font-semibold border border-rose-500/20 uppercase tracking-wider">Optimización Activa</span>
+          </div>
           <div class="overflow-x-auto">
             <table class="w-full text-left border-collapse">
               <thead>
-                <tr class="border-b border-slate-800 text-slate-400 text-sm">
-                  <th class="pb-3">Producto</th>
-                  <th class="pb-3">Stock Actual</th>
-                  <th class="pb-3">Umbral Mínimo</th>
-                  <th class="pb-3">Estado</th>
+                <tr class="bg-slate-950/40 text-slate-400 text-[11px] font-bold uppercase tracking-wider border-b border-slate-800/60">
+                  <th class="p-4 pl-6">Descripción del Item</th>
+                  <th class="p-4">Stock Físico</th>
+                  <th class="p-4">Umbral Mínimo</th>
+                  <th class="p-4 pr-6 text-right">Estatus Crítico</th>
                 </tr>
               </thead>
-              <tbody id="table-stock-critico" class="text-sm divide-y divide-slate-800/50">
+              <tbody id="table-stock-critico" class="text-xs divide-y divide-slate-800/40 text-slate-300">
                 </tbody>
             </table>
           </div>
@@ -95,52 +151,67 @@
       </section>
 
       <section id="view-productos" class="hidden space-y-6">
-        <div class="bg-slate-950 p-6 rounded-xl border border-slate-800">
-          <h3 class="text-lg font-bold mb-4">Auditoría General de Almacén (Consolidado con JOINs)</h3>
+        <div class="bg-panel rounded-2xl border border-slate-800/60 shadow-lg overflow-hidden">
+          <div class="p-5 border-b border-slate-800/60 bg-slate-900/30">
+            <h3 class="text-sm font-bold text-white">Consolidación Maestra de Almacén (Relacional mediante JOINs)</h3>
+            <p class="text-[11px] text-slate-400 mt-1">Cumple con la Fase de Normalización de Tercera Forma Normal (3FN)</p>
+          </div>
           <div class="overflow-x-auto">
             <table class="w-full text-left border-collapse">
               <thead>
-                <tr class="border-b border-slate-800 text-slate-400 text-sm">
-                  <th class="pb-3">Código</th>
-                  <th class="pb-3">Producto</th>
-                  <th class="pb-3">Categoría</th>
-                  <th class="pb-3">Stock</th>
-                  <th class="pb-3">Costo</th>
-                  <th class="pb-3">Proveedor</th>
+                <tr class="bg-slate-950/40 text-slate-400 text-[11px] font-bold uppercase tracking-wider border-b border-slate-800/60">
+                  <th class="p-4 pl-6">Código de Barras</th>
+                  <th class="p-4">Producto</th>
+                  <th class="p-4">Clasificación</th>
+                  <th class="p-4">Existencia</th>
+                  <th class="p-4">Precio Costo</th>
+                  <th class="p-4 pr-6">Proveedor Autorizado</th>
                 </tr>
               </thead>
-              <tbody id="table-productos-general" class="text-sm divide-y divide-slate-800/50">
+              <tbody id="table-productos-general" class="text-xs divide-y divide-slate-800/40 text-slate-300">
                 </tbody>
             </table>
           </div>
         </div>
       </section>
 
-      <section id="view-movimientos" class="hidden max-w-xl bg-slate-950 p-6 rounded-xl border border-slate-800">
-        <h3 class="text-lg font-bold mb-4">Formulario de Transacciones (DML)</h3>
-        <form id="form-movimiento" onsubmit="registrarTransaccion(event)" class="space-y-4">
-          <div>
-            <label class="block text-sm text-slate-400 mb-1">Tipo de Flujo</label>
-            <select id="form-tipo" class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-white focus:outline-none focus:border-blue-500" required>
-              <option value="ENTRADA">ENTRADA (Reabastecimiento)</option>
-              <option value="SALIDA">SALIDA (Venta / Distribución)</option>
-            </select>
+      <section id="view-movimientos" class="hidden max-w-xl mx-auto bg-panel p-6 md:p-8 rounded-2xl border border-slate-800/60 shadow-xl space-y-6">
+        <div>
+          <h3 class="text-base font-bold text-white flex items-center gap-2"><i data-lucide="terminal" class="w-4 h-4 text-blue-400"></i> Registro de Transacciones SQL (DML)</h3>
+          <p class="text-xs text-slate-400 mt-1">Garantiza la atomicidad y consistencia de datos (Propiedades ACID).</p>
+        </div>
+        
+        <form id="form-movimiento" onsubmit="registrarTransaccion(event)" class="space-y-5 text-xs">
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label class="block text-slate-400 font-semibold mb-1.5 uppercase tracking-wider">Tipo de Flujo</label>
+              <select id="form-tipo" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-white font-medium focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition" required>
+                <option value="ENTRADA">🟢 ENTRADA (Abastecimiento)</option>
+                <option value="SALIDA">🔴 SALIDA (Distribución)</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-slate-400 font-semibold mb-1.5 uppercase tracking-wider">Cantidad de Unidades</label>
+              <input type="number" id="form-cantidad" min="1" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-white font-medium focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition" placeholder="Ej. 10" required>
+            </div>
           </div>
+          
           <div>
-            <label class="block text-sm text-slate-400 mb-1">Producto Afectado</label>
-            <select id="form-producto" class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-white focus:outline-none focus:border-blue-500" required>
+            <label class="block text-slate-400 font-semibold mb-1.5 uppercase tracking-wider">SKU / Producto Destino</label>
+            <select id="form-producto" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-white font-medium focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition" required>
               </select>
           </div>
-          <div>
-            <label class="block text-sm text-slate-400 mb-1">Cantidad de Piezas</label>
-            <input type="number" id="form-cantidad" min="1" class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-white focus:outline-none focus:border-blue-500" required>
+
+          <div class="bg-slate-950 p-4 rounded-xl border border-slate-800/80 flex items-center justify-between">
+            <div>
+              <label class="block text-slate-500 font-bold uppercase tracking-widest text-[9px]">Firma del Operador (Seguridad)</label>
+              <input type="text" id="form-usuario" value="Luis_Fernando" class="bg-transparent text-slate-300 font-mono font-bold focus:outline-none cursor-not-allowed mt-0.5 text-xs" readonly>
+            </div>
+            <div class="p-2 bg-slate-900 text-slate-500 rounded-lg border border-slate-800"><i data-lucide="lock" class="w-4 h-4"></i></div>
           </div>
-          <div>
-            <label class="block text-sm text-slate-400 mb-1">Usuario Operador (Ética/Seguridad)</label>
-            <input type="text" id="form-usuario" value="Luis_Fernando" class="w-full bg-slate-800 border border-slate-700 rounded p-2 text-slate-400 focus:outline-none cursor-not-allowed" readonly>
-          </div>
-          <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded transition">
-            Ejecutar e Insertar Registro
+
+          <button type="submit" class="w-full bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-sky-500 text-white font-bold py-3.5 px-4 rounded-xl transition duration-200 shadow-lg shadow-blue-600/10 hover:shadow-sky-500/10 text-xs uppercase tracking-wider flex items-center justify-center gap-2">
+            <i data-lucide="play" class="w-4 h-4"></i> Confirmar y Ejecutar Bloque SQL
           </button>
         </form>
       </section>
@@ -148,7 +219,7 @@
     </main>
   </div>
 
-  <script href="./js/app.js"></script>
+  <script src="./js/app.js"></script>
   <script src="./js/db.js"></script>
   <script src="./js/queries.js"></script>
   <script src="./js/ui.js"></script>
